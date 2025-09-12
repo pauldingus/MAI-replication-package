@@ -629,18 +629,6 @@ def show_request_structure_overview(loc, locGroup, endDate, maxCloudCover, gcs_b
     print(f"     - Assets Required: ortho_analytic_4b_sr, ortho_udm2")
     print(f"     - Geographic Area: Clipped to location boundaries")
     
-    print(f"\n2. Anchor Image Search Request:")
-    print(f"   URL: https://api.planet.com/data/v1/quick-search")
-    print(f"   Method: POST")
-    print(f"   Purpose: Find high-quality reference image for harmonization")
-    print(f"   Filters:")
-    print(f"     - Item Type: PSScene")
-    print(f"     - Date Range: 2020-01-01 to {endDate}")
-    print(f"     - Cloud Cover: 0%")
-    print(f"     - Anomalous Pixels: 0%")
-    print(f"     - Clear Confidence: ≥ 99%")
-    print(f"     - Ground Control: Required")
-    
     print(f"\n3. Download Order Request(s):")
     print(f"   URL: https://api.planet.com/compute/ops/orders/v2")
     print(f"   Method: POST")

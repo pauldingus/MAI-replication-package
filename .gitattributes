@@ -1,2 +1,11 @@
+# Track large data files with Git LFS
 *.dta filter=lfs diff=lfs merge=lfs -text
 *.csv filter=lfs diff=lfs merge=lfs -text
+temp/*.dta filter=lfs diff=lfs merge=lfs -text
+datasets/weather/*.csv filter=lfs diff=lfs merge=lfs -text
+datasets/activity_raw/*.csv filter=lfs diff=lfs merge=lfs -text
+
+# Also track other common large file formats
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.tar.gz filter=lfs diff=lfs merge=lfs -text
+*.7z filter=lfs diff=lfs merge=lfs -text

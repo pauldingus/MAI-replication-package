@@ -4,7 +4,7 @@
 
 var locGroup = "INSERT_LOC_GROUP_HERE"//"MozShowcase"//
 var bucket = "INSERT_BUCKET_HERE" 
-var loc = ""INSERT_LOC_HERE"" //"lon-13_9827lat39_7674"//"lon-14_1821lat35_445"//
+var loc = "INSERT_LOC_HERE" //"lon-13_9827lat39_7674"//"lon-14_1821lat35_445"//
 
 // Uncomment for troubleshooting:
 

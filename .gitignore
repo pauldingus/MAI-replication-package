@@ -42,3 +42,6 @@ temp/
 # Log files
 *.log
 logs/
+
+# .dta files in the main directory
+*.dta

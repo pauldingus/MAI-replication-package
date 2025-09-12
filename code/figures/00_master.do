@@ -41,7 +41,7 @@ run code/figures/03_figure4c.do
 * panel D - name: shocks
 run code/figures/03_figure4d.do
 
-graph combine panela seasonality seasons_per_adm shocks, name(rowa, replace) altshrink graphregion(margin(none)) imargin(medsmall) name(figure4, replace)
+graph combine panela seasonality seasons_per_adm shocks,  altshrink graphregion(margin(none)) imargin(medsmall) name(figure4, replace)
 graph display, xsize(16) ysize(16)
 graph export "graphs/figure4.png", replace height(2000)
 
@@ -49,7 +49,7 @@ graph export "graphs/figure4.png", replace height(2000)
 run code/figures/04_figure5.do
 
 // 05 Figure S6
-run code/figures/05_figureS6.do
+run code/figures/05_figure_S6.do
 
 // 05 Figure S7
-run code/figures/05_figureS7.do
+run code/figures/05_figure_S7.do

@@ -75,13 +75,13 @@ function shorten_freqDayStr(input) {
 
 
 var locGroup= "INSERT_LOC_GROUP_HERE"  //"Kenya" 
-var loc= ""INSERT_LOC_HERE"" //"lon0_3606lat34_4016" 
+var loc= "INSERT_LOC_HERE" //"lon0_3606lat34_4016" 
 var country = "INSERT_COUNTRY_HERE" // "Kenya
 var bucket = "INSERT_BUCKET_HERE" //"kenya3"
-var freqListInp= "INSERT_FREQ_LIST_HERE" // 
-var freqDayStr=  "INSERT_FREQ_DAY_STR_HERE" // 
+var freqListInp= 6 // 
+var freqDayStr=  "weekday" // 
 
-var aoi = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+locGroup)
+var aoi = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+country)
           .filter(ee.Filter.eq('mktID', ee.String(loc))).first().geometry()
 Map.centerObject(aoi)
 var tileScale= ee.Number(16) 

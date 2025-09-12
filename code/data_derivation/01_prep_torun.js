@@ -1,0 +1,335 @@
+///////////////// 
+/// FUNCTIONS /// 
+///////////////// 
+
+// Function to create a composite of surrounding images for each day
+function createComposite(image, collection) {
+  var d = ee.Date(ee.String(image.get('Date')).slice(0,10));
+  var dateIndex = image.get('date_order');
+  var imWeekday = image.get('weekday');
+  
+  // Get list of weekdays other than our image:
+  var wkdList = freqList.filter(ee.Filter.neq('item',imWeekday ));
+  
+  // Create property containing the images' distance to the reference image in terms of ordered position
+  var icRelativeIndexed = collection.filterDate(d.advance(-42,'day'), d.advance(42,'day'))
+    .filter(ee.Filter.gt('shareOfAOI',0.5))
+    .map(function(img){
+      var relativePosition = ee.Number(img.get('date_order')).subtract(ee.Number(dateIndex)).abs();
+    return ee.Image(img).set('dateIndexDistance', relativePosition, 'dayDate',ee.Date(ee.String(img.get('Date')).slice(0,10)))
+  }, true)
+  
+  // For each weekday in the list, filter the image collection to contain just that weekday, and create a weighted sample surrounding our image.
+  var wkdSamples = wkdList.map(function(weekday){
+    var icFilteredForWeekday = icRelativeIndexed.filter(ee.Filter.eq('weekday', weekday)).sort('dateIndexDistance');
+    var within1 = ee.ImageCollection(icFilteredForWeekday.toList(2));
+    var within2 = ee.ImageCollection(icFilteredForWeekday.toList(4));
+    var within3 = ee.ImageCollection(icFilteredForWeekday.toList(6));
+    return within1.merge(within2).merge(within3)
+  })
+  
+  // Merge all collections in the list
+  var mergedSamples = wkdSamples.iterate(function(current, prev) {
+    return ee.ImageCollection(prev).merge(current);
+  }, ee.ImageCollection([])); // Start with an empty image collection
+  
+  mergedSamples = ee.ImageCollection(mergedSamples)
+  
+  // Get a list of the IDs included in the sample
+  var sampledIDs = mergedSamples.aggregate_array('system:id')
+  
+  // Retrieve the total counts for all pixels in the collection
+  var samplesCount = ee.Image(mergedSamples.count());
+    
+  // Create another sample and mask if the count is above the threshold
+  var extraSamples = extendComposite(image, icIndexed, samplesCount.lt(30), sampledIDs);
+    
+  // Merge original and extra samples
+  mergedSamples = mergedSamples.merge(extraSamples)
+    
+  // Get the size of the resulting collection to return as a property
+  var size=ee.ImageCollection(mergedSamples).size()
+  
+  // Retrieve the total counts for all pixels in the collection
+  var compositePixelCount = ee.Image(mergedSamples.count());
+  
+  // Get the mean pixel count
+  // var meanPixels = compositePixelCount.reduceRegion({
+  //   reducer: ee.Reducer.mean(),
+  //   geometry: aoi,
+  //   scale: 3.1,
+  //   maxPixels: 1e8
+  // });
+  // meanPixels = meanPixels.get('B1')
+  var meanPixels = null; // recomment if we want to export mean pixels again
+  
+  //get the average time difference of sampled images from the primary image
+  mergedSamples = mergedSamples.map(function(i){
+    var d_sample = ee.Date(i.get('system:time_start'))
+    return i.set('date_difference', ee.Number(d.difference(d_sample, 'day')).abs())
+  })
+  
+  meanDateDiff = mergedSamples.reduceColumns(ee.Reducer.mean(), ['date_difference']).get('mean')
+  
+  // Merge into the final composite
+  return ee.ImageCollection(mergedSamples)
+      .reduce(ee.Reducer.intervalMean({minPercentile:40, maxPercentile:60, maxRaw:1000}))
+      .set('Date', image.get('Date'), 'size',size, 'meanPixels', meanPixels, 'meanDateDiff', meanDateDiff);
+}
+
+// Function to create extednded composite samples
+function extendComposite(image, collection, mask, alreadySampled) {
+  var d = ee.Date(ee.String(image.get('Date')).slice(0,10));
+  var dateIndex = image.get('date_order');
+  var imWeekday = image.get('weekday');
+  
+  // Get list of weekdays other than our image:
+  var wkdList = freqList.filter(ee.Filter.neq('item',imWeekday ));
+  
+  //create property containing the images' distance to the reference image in terms of ordered position
+  var icRelativeIndexed = collection.filterDate(d.advance(-84,'day'), d.advance(84,'day'))
+    .filter(ee.Filter.inList('system:id', alreadySampled).not())
+    .filter(ee.Filter.gt('shareOfAOI', 0.5))
+    .map(function(img){
+      var relativePosition = ee.Number(img.get('date_order')).subtract(ee.Number(dateIndex)).abs();
+    return ee.Image(img).set('dateIndexDistance', relativePosition, 'dayDate',ee.Date(ee.String(img.get('Date')).slice(0,10)))
+  }, true)
+  
+  // For each weekday in the list, filter the image collection to contain just that weekday, and create a weighted sample surrounding our image.
+  var wkdSamples = wkdList.map(function(weekday){
+    var icFilteredForWeekday = icRelativeIndexed.filter(ee.Filter.eq('weekday', weekday)).sort('dateIndexDistance');
+    return ee.ImageCollection(icFilteredForWeekday.toList(6));
+  })
+  
+  // Merge all collections in the list
+  var extraSamples = wkdSamples.iterate(function(current, prev) {
+    return ee.ImageCollection(prev).merge(current);
+  }, ee.ImageCollection([])); // Start with an empty image collection
+  
+  extraSamples = ee.ImageCollection(extraSamples)
+  
+  // Mask based on which pixels are below the count threshold
+  extraSamples = ee.ImageCollection(
+    extraSamples.map(function(i){
+    return i.updateMask(mask)
+    })
+  )
+  
+  return extraSamples
+}
+
+function diffToComposite(image, compositeCollection) { // calculate for each image the difference to the composite
+  
+  // Get the image from the composite collection that matches the image's date
+  var composite = ee.Image(compositeCollection.filter(ee.Filter.eq('Date', image.get('Date'))).get(0))
+  var compositeSize = composite.get('size')
+  var wkdy = image.get('weekday')
+  var meanPixels = composite.get('meanPixels')
+  var meanDateDiff = composite.get('meanDateDiff')
+  return ee.Image(image).subtract(composite)
+    .set('weekday',wkdy, 'size', compositeSize, 'meanPixels', meanPixels, 'meanDateDiff', meanDateDiff)
+    .set('system:time_start',image.get('system:time_start'))
+}
+
+// Function to add the polar corrdinate bands to each image
+function polarCoor_Conversion(image){
+  var temp_r = image.select('B3');
+  var temp_g = image.select('B2');
+  var temp_b = image.select('B1');
+  
+  var temp_rho = temp_r.pow(2).add(temp_g.pow(2)).add(temp_b.pow(2)).pow(0.5).rename('rho');
+  var temp_theta1 = temp_r.pow(2).add(temp_g.pow(2)).pow(0.5).divide(temp_b).atan().rename('t1');
+  var temp_theta2 = temp_g.divide(temp_r).atan().rename('t2');
+  
+  return image.addBands(temp_rho).addBands(temp_theta1).addBands(temp_theta2);
+}
+
+
+//////////////////   
+/// PARAMETERS ///
+////////////////// 
+
+
+var locGroup= "79_Ethiopia" // "170_Mozambique"
+var bucket = "p79ethiopia65"//"p170mozambique4" 
+var country = "Ethiopia" //"Mozambique" 
+var loc= "lon38_5671lat9_2948" //"lon33_9351lat-20_3856" 
+
+ 
+var freqListInp= 6 // 
+var freqDayStr=  "weekday" // 
+var freqList=ee.List.sequence(0,freqListInp,1) 
+
+//////////////////
+/// INPUTS ///////
+//////////////////
+
+var linkDateWeekday = ee.FeatureCollection("projects/planetupload/assets/linkDateWeekday")
+
+var aoi = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+country)
+          .filter(ee.Filter.eq('mktID', ee.String(loc))).first().geometry()
+
+var tileScale= aoi.area(1).divide(500000).ceil().min(16).max(4)
+
+var ic = ee.ImageCollection("projects/"+bucket+"/assets/PS_imgs/"+locGroup+ "/" + loc)
+  .filter(ee.Filter.stringContains({leftField: 'system:index', rightValue: '_SR_'}))
+  .map(function(i){
+    var harmonized = ee.String(i.get('system:index')).index('harmonized').gte(0)
+    return i.set('hasQ8',i.bandNames().contains('Q8'))
+              .set('harmonized', harmonized)
+  })
+  .filter(ee.Filter.eq('harmonized',1)) // important
+  .filter(ee.Filter.eq('hasQ8',true))
+  .map(function(i){
+    
+    var mask=i.select('Q1').eq(0).multiply(i.select('Q8').eq(2)).not()
+      
+    var mean = mask.reduceRegion({
+            reducer: ee.Reducer.mean(), geometry: aoi, scale: 3.1, tileScale: tileScale // This calculates the share of AOI for which we have data, not only considering the image footprint
+          })
+    
+    var time = ee.Date(i.get('system:time_start')).format('HH:mm:ss')
+    var timeDec = ee.Number.parse(time.slice(0,2)).add(ee.Number.parse(time.slice(3,5)).divide(60)).add(ee.Number.parse(time.slice(6,8)).divide(3600))
+    var date =  ee.String(ee.Algorithms.If({
+      condition: i.propertyNames().contains('acquired'), 
+      trueCase: ee.String(i.get('acquired')).slice(0, 10), 
+      falseCase: ee.Date(i.get('system:time_start')).format('YYYY-MM-dd')
+    }))
+    
+    var clearPercentForFilter =  ee.Number(ee.Algorithms.If({
+      condition: i.propertyNames().contains('clear_percent'), 
+      trueCase: i.get('clear_percent'), 
+      falseCase: 100
+    }))
+    
+    var meanValues = i.reduceRegion({reducer: ee.Reducer.mean(), geometry: aoi, scale: 10});
+    
+    return i.updateMask(mask)
+            .set('shareOfAOI', mean.get('Q1'))
+            .set('Date',date.cat('a'))
+            .set("item_id", ee.String(i.get('system:index')).slice(0,23))
+            .set("imageID", ee.String(i.get('system:index')).slice(0,23))
+            .set("system:id", ee.String(i.get('system:index')).slice(0,23))
+            .set("system:index", ee.String(i.get('system:index')).slice(0,23))
+            .set('timeDec', timeDec)
+            .set('clearPercentForFilter', clearPercentForFilter)
+            .set('B1_mean', meanValues.get('B1'))
+            .set('B2_mean', meanValues.get('B2'))
+            .set('B3_mean', meanValues.get('B3'))
+  },true)
+  .map(polarCoor_Conversion)
+  .select('B1','B2','B3','t1','t2')
+  .filter(ee.Filter.gt('shareOfAOI',0.2)).filterMetadata('shareOfAOI', 'not_equals', null) // do this at the download stage
+  .filter(ee.Filter.gt('clearPercentForFilter',20))
+
+var B1_mean_stats = ic.aggregate_stats('B1_mean');
+var B2_mean_stats = ic.aggregate_stats('B2_mean');
+var B3_mean_stats = ic.aggregate_stats('B3_mean');
+
+ic =ic.filter(ee.Filter.gt('timeDec', ee.Number(ic.reduceColumns(ee.Reducer.median(), ['timeDec']).get('median')).subtract(.5)))
+      .filter(ee.Filter.lt('timeDec', ee.Number(ic.reduceColumns(ee.Reducer.median(), ['timeDec']).get('median')).add(.5)))
+      .filter(ee.Filter.lt('B1_mean', (ee.Number(B1_mean_stats.get('mean')).add(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+     .filter(ee.Filter.gt('B1_mean', (ee.Number(B1_mean_stats.get('mean')).subtract(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+     .filter(ee.Filter.lt('B2_mean', (ee.Number(B2_mean_stats.get('mean')).add(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+     .filter(ee.Filter.gt('B2_mean', (ee.Number(B2_mean_stats.get('mean')).subtract(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+     .filter(ee.Filter.lt('B3_mean', (ee.Number(B3_mean_stats.get('mean')).add(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+     .filter(ee.Filter.gt('B3_mean', (ee.Number(B3_mean_stats.get('mean')).subtract(ee.Number(B1_mean_stats.get('sample_sd')).multiply(2)))))
+
+//////////////////
+/// PROCESSING ///
+//////////////////
+
+// Assign to each image its weekday based on the date
+var prepLink = linkDateWeekday.map(function(f) {
+  return f.set('Date',ee.String(f.get('dateStr')).cat('a'))
+})
+
+var icWwkd = ee.Join.inner('primary','secondary','match')
+            .apply(ic, prepLink, ee.Filter.equals({leftField: 'Date', rightField: 'Date'}));
+
+var imgsWwkds= icWwkd.map(function(f){
+    var image=ee.Feature(f).get('primary')
+    var freqDay = ee.Feature(ee.Feature(f).get('secondary')).get(freqDayStr)
+    var year = ee.Feature(ee.Feature(f).get('secondary')).get('year')
+    return ee.Image(image).set(freqDayStr, ee.Number(freqDay))
+}).sort('system:time_start');
+
+// Add a sequential number to each image in the collection
+var icList = imgsWwkds.toList(imgsWwkds.size())
+var idList = ee.List.sequence(0, imgsWwkds.size().subtract(1))
+
+var icListIndexed = idList.map(function(i){
+  var index = idList.get(i)
+  var f = icList.get(i)
+  return ee.Feature(f).set('date_order', index).copyProperties(f)
+})
+var icIndexed = ee.ImageCollection(icListIndexed)
+
+var icIndexedToComposite = icIndexed.map(function(i){
+  var d = ee.Date(ee.String(i.get('Date')).slice(0,10))
+  var numAdjacent = icIndexed.filterDate(d.advance(-42,'day'), d.advance(42,'day')).size()
+  return i.set('numAdjacent', numAdjacent)
+}).filter(ee.Filter.gte('numAdjacent', 21)) 
+
+//create composites for each unique day in the image:
+var compositeCollection = icIndexedToComposite.aggregate_array('Date').distinct().map(function(date){
+  var image = icIndexedToComposite.filter(ee.Filter.eq('Date', date)).first()
+  return createComposite(image, icIndexed)
+})
+
+//Create an image collection containing differences to the composite for each image
+var diffQ_r1 = ee.ImageCollection(icIndexedToComposite.map(function(image){return diffToComposite(image, compositeCollection)}, true))
+              .filter(ee.Filter.gt('size',20))
+
+var diffsByWkdy = ee.ImageCollection(freqList.map(function(d){
+  var diffQ_r1_temp = diffQ_r1.filter(ee.Filter.eq('weekday',d));
+  var size=diffQ_r1_temp.size()
+  var meanPixels = diffQ_r1_temp.reduceColumns(ee.Reducer.mean(), ['meanPixels']).get('mean');
+  var meanDateDiff = diffQ_r1_temp.reduceColumns(ee.Reducer.mean(), ['meanDateDiff']).get('mean');
+  var RGB_temp = diffQ_r1_temp.select('B1','B2','B3')
+      .reduce(ee.Reducer.intervalMean({minPercentile:40, maxPercentile:60, maxRaw:1000}))
+      .abs().reduce(ee.Reducer.max())
+  var polar_temp = diffQ_r1_temp.select('t1', 't2')
+      .reduce(ee.Reducer.intervalMean({minPercentile:40, maxPercentile:60, maxRaw:1000}))
+      .abs().reduce(ee.Reducer.max())
+  var RGB_max_polar_max = polar_temp.select('max').multiply( RGB_temp.select('max')).rename('max_pMax');
+  return RGB_temp.addBands(RGB_max_polar_max)
+  .set('weekday', d, 'meanPixels', meanPixels, 'meanDateDiff', meanDateDiff)
+}))
+
+var meanPixels = diffsByWkdy.reduceColumns(ee.Reducer.mean(), ['meanPixels']).get('mean')
+var meanDateDiff = diffsByWkdy.reduceColumns(ee.Reducer.mean(), ['meanDateDiff']).get('mean')
+
+// Rename the collections to identify bands by group and weekday
+var renamed = diffsByWkdy//.merge(ee.ImageCollection(diffsTotal))
+  .map(function(i){
+    var name2 = ee.String('_wd').cat(ee.String(ee.Number(i.get('weekday')).format('%.0f')))
+    var meanCompositePixels = i.get('meanCompositePixels')
+    return ee.Image(i).select(['max_pMax'], [ee.String('50p_max_pMax').cat(name2)])
+})
+
+// Merge into a single difference image, and sort bands by name
+var difference_img = ee.ImageCollection(renamed).toBands()
+
+var sorted = difference_img.bandNames().sort()
+
+var bandNames = sorted.map(function(b){
+  return ee.String('b').cat(ee.String(b))
+})
+
+difference_img = difference_img
+  .select(sorted, bandNames)
+  .set('meanCompositePixels', meanPixels, 'meanCompositeDateDiff', meanDateDiff)
+  
+//Export
+var params = {
+  element: difference_img,
+  type:'EXPORT_IMAGE',
+  description: "diffImg" + loc,
+  region: aoi,
+  scale: 3.1,
+  assetId: "projects/"+bucket+"/assets/PS_imgs/"+locGroup+"/"+loc+"proc/diffImgApr24"
+}
+
+var taskId = ee.data.newTaskId(1)
+ee.data.startProcessing(taskId, params);  

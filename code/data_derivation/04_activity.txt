@@ -13,11 +13,11 @@ function shorten_freqDayStr(input) {
 var locGroup= "INSERT_LOC_GROUP_HERE" // "170_Mozambique"
 var bucket = "INSERT_BUCKET_HERE"//"p170mozambique4" 
 var country = "INSERT_COUNTRY_HERE" //"Mozambique" 
-var loc= ""INSERT_LOC_HERE"" //"lon33_9351lat-20_3856" 
+var loc= "INSERT_LOC_HERE" //"lon33_9351lat-20_3856" 
 var freqListInp= 6 // 
 var freqDayStr=  "weekday" // 
 
-var aoi_all = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+locGroup)
+var aoi_all = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+country)
           .filter(ee.Filter.eq('mktID', ee.String(loc))).first().geometry()
 
 var mktShapes = ee.FeatureCollection("projects/"+bucket+"/assets/PS_imgs/"+locGroup+"/"+loc+"proc/shp_MpM6_"+locGroup+loc)

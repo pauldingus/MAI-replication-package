@@ -1,0 +1,2 @@
+[console_scripts]
+planet = planet.cli.cli:main

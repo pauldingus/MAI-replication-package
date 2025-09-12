@@ -1,0 +1,13 @@
+{
+  "name": "mai-replication",
+  "private": true,
+  "scripts": {
+    "test": "node -e \"console.log('JS smoke OK')\""
+  },
+  "dependencies": {
+    "@pdingus/ee-runner": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=20 <21"
+  }
+}

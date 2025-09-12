@@ -1,0 +1,60 @@
+//////////////
+/// INPUTS ///
+//////////////
+
+var locGroup = "INSERT_LOC_GROUP_HERE"//"MozShowcase"//
+var bucket = "INSERT_BUCKET_HERE" 
+var loc = ""INSERT_LOC_HERE"" //"lon-13_9827lat39_7674"//"lon-14_1821lat35_445"//
+
+// Uncomment for troubleshooting:
+
+// var locGroup = "79_Amhara_1"//"MozShowcase"//
+// var bucket = "p79amhara1" 
+// var loc = "lon12_9201lat37_745"
+
+/////////////////
+/// FUNCTIONS ///
+/////////////////
+
+// pull the image collection required
+var directory = ee.data.listAssets("projects/"+bucket+"/assets/PS_imgs/")['assets'][0]['id']
+var ic = ee.ImageCollection(directory + "/" + loc)
+
+// Function to extract all non-system properties of an image
+var extractAllProperties = function(image) {
+  var properties = image.propertyNames(); // Get all property names
+
+  // Filter out unwanted system properties
+  var filter = ee.Filter.stringContains('item', 'system').not();
+  var filteredProperties = properties.filter(filter);
+  
+  // Create a Feature with property names and values
+  var feature = ee.Feature(null, ee.Dictionary.fromLists(filteredProperties, filteredProperties.map(function(property) {
+    return image.get(property);
+  })));
+
+  return feature;
+};
+
+// Map over the image collection to get the properties for each image
+var properties = ic.sort('acquired',false).map(extractAllProperties);
+
+// Export.table.toCloudStorage({ OLD EXPORT PARAMETERS
+//     collection: properties,
+//     description: 'test_export_table_to_Cloud_Storage',
+//     bucket: 'exports-mai2023', // Without 'gs://'
+//     fileNamePrefix: '79_Tigray_0/properties/test-properties',
+//     fileFormat: 'CSV'
+//   })
+
+var params={
+  element: properties,
+  type: 'EXPORT_FEATURES',
+  description: 'prop_' + loc + '_' + locGroup,
+  outputPrefix: locGroup + '/properties/propEx_' + locGroup + '_' + loc,
+  fileFormat: 'CSV',
+  outputBucket: 'exports-mai2023'
+}
+
+var taskId = ee.data.newTaskId(1);
+ee.data.startProcessing(taskId, params);

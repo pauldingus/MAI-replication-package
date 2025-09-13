@@ -1,19 +1,17 @@
 # Market Activity Index Replication Package
 
-This repository contains the replication package for the submission *Using satellite imagery to map rural marketplaces
-and monitor their activity at high frequency* (Carnap et al.).
-
-## Overview
-
-This package provides code and intermediate data products for detecting periodic market activity using high-frequency satellite imagery. The methodology combines Google Earth Engine processing with python processing to identify market locations and quantify activity patterns from Planet Labs satellite data.
+This repository contains the replication package for *Using satellite imagery to map rural marketplaces
+and monitor their activity at high frequency* (https://arxiv.org/abs/2407.12953).
 
 ## Getting Started
 
-**For a complete walkthrough of the methodology, see the main demonstration notebook:**
+**For a walkthrough of the methodology underlying market detection and activity tracking, see the main demonstration notebook:**
 
 **[`code/master_data_derivation.ipynb`](code/master_data_derivation.ipynb)**
 
-This notebook provides a step-by-step example of the complete processing pipeline for a single candidate location in Ethiopia, from satellite imagery acquisition to final market activity analysis as shown in Figure 3C of the paper.
+This notebook provides a step-by-step example of the complete processing pipeline for a single candidate location in Ethiopia, from satellite imagery acquisition to final market activity analysis as shown in Figure 3C of the paper. The data underlying the paper is derived from applying this methodology to thousands of similar candidate locations. 
+
+The figures and tables derived from this data are documented in **[`code/figures/figures_1_2_3_t1_t2_s1_s2_s3_s5.ipynb`](code/figures/figures_1_2_3_t1_t2_s1_s2_s3_s5.ipynb)** and **[`code/figures/00_master.do`](code/figures/00_master.do)**. The latter requires Stata to run. 
 
 ## Repository Structure
 

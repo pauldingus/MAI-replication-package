@@ -1,0 +1,93 @@
+function shorten_freqDayStr(input) {
+  if (/weekday/i.test(input)) return "w7";
+  if (/monthday/i.test(input) || /monthdayfromEnd/i.test(input)) return "w31";
+  if (/weekdayEverySecond/i.test(input)) return "w14";
+  if (/everyFiveDays/i.test(input)) return "w5";
+  return input;
+}
+
+//////////////////    
+/// PARAMETERS ///
+////////////////// 
+
+var locGroup= "79_Ethiopia" // "170_Mozambique"
+var bucket = "p79ethiopia65"//"p170mozambique4" 
+var country = "INSERT_COUNTRY_HERE" //"Mozambique" 
+var loc= "lon38_5671lat9_2948" //"lon33_9351lat-20_3856" 
+var freqListInp= 6 // 
+var freqDayStr=  "weekday" // 
+
+var aoi_all = ee.FeatureCollection("projects/planetupload/assets/cleanedLocs/"+country+"/"+country)
+          .filter(ee.Filter.eq('mktID', ee.String(loc))).first().geometry()
+
+var mktShapes = ee.FeatureCollection("projects/"+bucket+"/assets/PS_imgs/"+locGroup+"/"+loc+"proc/shp_MpM6_"+locGroup+loc)
+                .map(function(f){return f.set('p50', null)})
+
+var tileScale= 16 //aoi.area(1).divide(500000).ceil().min(16).max(4)
+
+var img = ee.Image("projects/"+bucket+"/assets/PS_imgs/"+locGroup+"/"+loc+"proc/"+'expJune06maxpMax_'+loc)
+var bands=img.bandNames()
+
+var possible_shapes_union = ee.FeatureCollection(mktShapes.filter(ee.Filter.eq('subStrictnessRank',100))
+      .filter(ee.Filter.eq('strictnessRank',mktShapes.aggregate_max('strictnessRank')))
+      .first().geometry(1).bounds())
+
+var ic =ee.ImageCollection(bands.map(function(b){
+  var recreated_image = img.select(ee.List([b])).set('ident',b)
+  return recreated_image
+}))
+
+var maxRaw_dict = ee.Dictionary({
+  0: 10000,
+  10: 10000,
+  20: 8000,
+  30: 7500,
+  40: 7000,
+  50: 6500,
+  60: 6000,
+  70: 5500,
+  80: 5000,
+  90: 4500,
+  100: 4000,
+})
+
+var maxRaw_area=mktShapes.filter(ee.Filter.eq('strictnessRank',mktShapes.aggregate_max('strictnessRank')))
+                      .first().geometry().area(1).pow(0.5)
+var maxRaw_key = maxRaw_area.divide(10).round().multiply(10).min(100).int()
+var maxRaw = maxRaw_dict.get(maxRaw_key)
+
+var toRemove = ee.List(['identify_non_overlapping','polygon_type','coorLength','length','B1_mean','B2_mean','B3_mean','provider','publishing_stage','pixel_resolution','quality_category','published','updated','instrument','item_type','market'])
+var reducedIC = ic.map(function(i){ 
+  return i.focalMedian({
+    radius: 1, 
+    kernelType: 'square',
+    units: 'pixels'
+  })
+  .reduceRegions({
+    collection: mktShapes.sort('strictnessRank',false), // sorting necessary so that first shape in reduceRegion intersects with image footprint and percentile variable actually gets created
+    reducer:  ee.Reducer.percentile({percentiles: [50], maxRaw:maxRaw})  
+      .combine(ee.Reducer.count(), "c", true) // number of pixels considered
+      .combine(ee.Reducer.sum(), "sum", true), // the sum of deviations; needs to be normalized 
+    scale: 3.1,
+    tileScale: tileScale
+}).map(function(p){
+  return p.copyProperties(i)
+})
+}).flatten()
+.map(function(f){return ee.Feature(f.setGeometry(null)).select(f.propertyNames().removeAll(toRemove))
+    .set('shapeArea',f.area())
+})
+//print('reducedIC', reducedIC.limit(100), reducedIC.size())
+var freqDayStr_short = shorten_freqDayStr(freqDayStr)
+
+//Export
+var params = {
+  element: reducedIC,
+  type:'EXPORT_FEATURES',
+  outputPrefix: locGroup+'/measures/exportAct5_maxpMax'+loc+"_"+freqDayStr_short,
+  description: 'exportAct5_'+loc+"_maxpMax"+freqDayStr_short,
+  fileFormat: 'CSV',
+  outputBucket: 'exports-mai2023'
+}
+var taskId = ee.data.newTaskId(1)
+ee.data.startProcessing(taskId, params);

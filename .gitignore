@@ -1,0 +1,49 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Node.js dependencies
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
+logs/
+
+# .dta files in the main directory only (not subdirectories)
+/*.dta
+
+# Antiquated code files
+code/data_derivation/05_activityFunctions.py
+code/data_derivation/00_master_dataDerivation.ipynb

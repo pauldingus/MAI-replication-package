@@ -11,7 +11,7 @@
 graph set window fontface "Arial"
 
 * cd "~\Dropbox\MarketActivityIndex\mai_shared"
-cd "C:\Users\tillmanv\Dropbox\MarketActivityIndex\mai_shared\Submissions\MktAct\NatureComm\ReplicationPackage"
+cd "C:\Users\tillmanv\Dropbox\MarketActivityIndex\mai_shared\Submissions\MktAct\NatureComm\MAI-replication-package"
 
 global color1 "42 157 143"
 global color2 "233 196 106"
@@ -51,5 +51,8 @@ run code/figures/04_figure5.do
 // 05 Figure S6
 run code/figures/05_figure_S6.do
 
-// 05 Figure S7
-run code/figures/05_figure_S7.do
+// 06 Figure S7
+run code/figures/06_figure_S7.do
+
+// 07 Figure LSMS
+run code/figures/07_figure_lsms.do

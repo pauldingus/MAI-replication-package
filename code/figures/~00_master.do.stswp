@@ -51,5 +51,8 @@ run code/figures/04_figure5.do
 // 05 Figure S6
 run code/figures/05_figure_S6.do
 
-// 05 Figure S7
-run code/figures/05_figure_S7.do
+// 06 Figure S7
+run code/figures/06_figure_S7.do
+
+// 07 Figure LSMS
+run code/figures/07_figure_lsms.do

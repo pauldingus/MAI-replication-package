@@ -1,9 +1,3 @@
-global color1 "42 157 143"
-global color2 "233 196 106"
-global color3 "231 111 81"
-global color4 "150 177 137"
-global color5 "234 155 94"
-
 use "datasets\LSMS\2015\ETH_HouseholdGeovars_y3.dta", clear
 keep ea_id2 lat_dd_mod lon_dd_mod
 duplicates drop ea_id2, force
@@ -96,6 +90,7 @@ hist log_km if cs4q14 == 1 | cs4q15<5, bin(100) fraction ///
 gen detected_market_in_community = .
 	replace detected_market_in_community = 1 if cs4q14==1 | cs4q15<=5
 	replace detected_market_in_community = 0 if cs4q14==2 & cs4q15>5
+	
 ksmirnov km_to_nid, by(detected_market_in_community)
 if r(p)<0.001{
 	local pvalue "<0.001"
@@ -104,5 +99,16 @@ else{
 	local pvalue = round(r(p),0.001)
 }
 
-distplot log_km if km_to_nid<300, over(detected_market_in_community) legend(title("Stated: market within" "5km from community", size(medsmall)) order(2 "yes" 1 "no") row(1) pos(5) ring(0)) xline(`=log(5)', lp(dash))  xscale(range(`=log(1)' `=log(300)')) xlabel(`=log(1)' "1" `=log(5)' "5" `=log(10)' "10" `=log(50)' "50" `=log(100)' "100" `=log(300)' "300") xtitle("Distance from assigned community centroid to closest detected market (km)") ytitle("Cumulative share of 2015/18/21 LSMS enumeration areas") text(.6 `=log(100)' "p-value on K-S test of equality" "of distributions: `pvalue'") color("$color1" "$color3")
+distplot log_km if km_to_nid<300, over(detected_market_in_community) ///
+	legend(off) ///
+	xscale(range(`=log(1)' `=log(300)')) ///
+	xlabel(`=log(1)' "1" `=log(5)' "5" `=log(10)' "10" `=log(50)' "50" `=log(100)' "100" `=log(300)' "300", labsize(small)) ///
+	ylabel(,labsize(small)) ///
+	xtitle("Straight-line distance from assigned community centroid" "to closest detected market (km)", size(small)) ///
+	ytitle("Cumulative share of 2015/18/21 LSMS enumeration areas", size(small)) ///
+	text(.6 `=log(100)' "p-value on K-S test of equality" "of distributions: `pvalue'", size(small)) color("$color2" "$color3") ///
+	text(.7 `=log(1.8)' "Stated: market within" "5km from community", size(small) color("$color3") placement(e)) ///
+	text(.3 `=log(100)' "Stated: no market within" "5km from community", size(small) color("$color2") placement(w))
+graph display, xsize(16) ysize(16)
+graph export "graphs/figure_lsms.png", replace height(2000)
 

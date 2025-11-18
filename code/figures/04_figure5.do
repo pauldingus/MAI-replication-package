@@ -174,6 +174,8 @@ gen admlvl1 = ""
 	merge 1:1 admlvl1 year quarter using  "temp/conflict_adm1_quarter.dta", keep(1 3) nogen
 	replace countEvent = 0 if countEvent==.
 	
+	local tgt_count countEvent
+	
 	merge 1:1  admlvl1 year quarter using "temp/act_by_quarter_adm1.dta", keep(1 3)
 
 	keep if year>2020 | (year==2020 & quarter==4)
@@ -186,6 +188,16 @@ gen admlvl1 = ""
 	if abs(`b' / `se') >2.64{
 		local stars "***"
 	}
+	
+	foreach adm1 in Tigray Amhara Oromia{
+		reg deseas_mktAct_2018 countEvent if admlvl1=="`adm1'", robust
+		local b_`adm1'= round(_b[countEvent], 0.001)
+		local se_`adm1' = round(_se[countEvent], 0.001)
+		if abs(`b_`adm1'' / `se_`adm1'') >2.64{
+			local stars`adm1' "***"
+		}
+	}
+	
 	global colorLA gs10
 	foreach adm1 in LA Tigray Amhara Oromia  {
 		forv year=2020/2024{
@@ -216,10 +228,74 @@ gen admlvl1 = ""
 
 tw `tw2' (lfit deseas_mktAct_2018 countEvent, lp(dash) lc(gs6)), legend(off) ytitle("Mean quarterly market""activity, deseasonalized", size(medlarge)) xtitle("Conflict events per quarter", size(medlarge)) name(comb1, replace) title("{bf:B}", ring(1) pos(10) size(large)) fxsize(45) /// `text' 
 graphregion(margin(0 2 0 0)) xlabel(,labsize(medlarge)) ylabel(,labsize(medlarge)) plotregion(lstyle(none)) /// yline(0, lp(dash) lc(gs8))
-   text(-22 350 "`b'`stars'" , placement(c) color(gs6)) ///
-   text(-25 350  "(`se')", placement(c) color(gs6)) 
+   text(-22 350 "`b'`stars'" , placement(c) color(gs6)) /// 
+   text(-26 350  "(`se')", placement(c) color(gs6)) ///
+   text( 40 400 "`b_Tigray'`starsTigray' (`se_Tigray')", placement(w) color($colorTigray)) ///
+   text( 34 400 "`b_Amhara'`starsAmhara' (`se_Amhara')", placement(w) color($colorAmhara)) ///
+   text( 28 400 "`b_Oromia'`starsOromia' (`se_Oromia')", placement(w) color($colorOromia))
 
 graph display, xsize(6) ysize(6)
+
+/// FIGURE FOR APPENDIX ///
+	local tw2 
+	reg deseas_mktAct_2018 countEvent, robust
+	local b= round(_b[countEvent], 0.001)
+	local se = round(_se[countEvent], 0.001)
+	if abs(`b' / `se') >2.64{
+		local stars "***"
+	}
+	
+	foreach adm1 in Tigray Amhara Oromia{
+		reg deseas_mktAct_2018 countEvent if admlvl1=="`adm1'", robust
+		local b_`adm1'= round(_b[countEvent], 0.001)
+		local se_`adm1' = round(_se[countEvent], 0.001)
+		if abs(`b_`adm1'' / `se_`adm1'') >2.64{
+			local stars`adm1' "***"
+		}
+	}
+	
+	global colorLA gs10
+	foreach adm1 in LA Tigray Amhara Oromia  {
+		forv year=2020/2024{
+			local y =`y'+1
+			local yy=`y'-1
+			local msym : word `y' of "`msyms'"
+			local add (scatter deseas_mktAct_2018 countEvent if year==`year' & admlvl1=="`adm1'", msymbol(`msym') mc("${color`adm1'}"))
+			local tw `tw' `add' 
+			forvalues q=1/4{
+				su deseas_mktAct_2018 if year==`year' & admlvl1=="`adm1'" &  quarter==`q'
+				local ycoor=r(mean)
+				su countEvent if year==`year' & admlvl1=="`adm1'" &  quarter==`q'
+				local xcoor=r(mean)
+				if "`xcoor'"!="." {
+					if (`year'==2020 &  `xcoor'>300) | (`year'==2021 &  `xcoor'>300) | (`year'==2024 &  `ycoor'<-20) {
+						local xxcoor= `xcoor' +3
+						local text `text' text(`ycoor' `xxcoor' "202 ", color("gs6")  placement(w))
+					}
+					local text `text' text(`ycoor' `xcoor' "`yy'", color("${color`adm1'}") placement(c))
+				}
+			}
+		}
+		local add (lfit deseas_mktAct_2018 countEvent if admlvl1=="`adm1'" & year>2020, lp(dash) lc("${color`adm1'}"))
+		// local tw `tw' `add' 
+		local y=0
+		local tw2  `tw2'  (scatter deseas_mktAct_2018 countEvent if admlvl1=="`adm1'", mcolor("${color`adm1'}") msymbol(O))
+	}
+
+tw `tw2' (lfit deseas_mktAct_2018 countEvent, lp(dash) lc(gs6)) ///
+		 (lfit deseas_mktAct_2018 countEvent if admlvl1=="Tigray", lp(dash) lc("$colorTigray")) ///
+		 (lfit deseas_mktAct_2018 countEvent if admlvl1=="Amhara", lp(dash) lc("$colorAmhara")) ///
+		 (lfit deseas_mktAct_2018 countEvent if admlvl1=="Oromia", lp(dash) lc("$colorOromia")) ///
+, legend(off) ytitle("Mean quarterly market activity, deseasonalized", size(medlarge)) xtitle("Conflict events per quarter", size(medlarge)) name(comb1, replace) /// `text' 
+graphregion(margin(0 2 0 0)) xlabel(,labsize(medlarge)) ylabel(,labsize(medlarge)) plotregion(lstyle(none)) /// yline(0, lp(dash) lc(gs8))
+   text(22 400 "All: `b'`stars' (`se')" , placement(w) color(gs6)) /// 
+   text(40 400 "Tigray: `b_Tigray'`starsTigray' (`se_Tigray')", placement(w) color($colorTigray)) ///
+   text(34 400 "Amhara: `b_Amhara'`starsAmhara' (`se_Amhara')", placement(w) color($colorAmhara)) ///
+   text(28 400 "Oromia: `b_Oromia'`starsOromia' (`se_Oromia')", placement(w) color($colorOromia)) 
+   
+graph display, xsize(6) ysize(6)
+graph export "graphs/figure_Slines.png", replace height(2000)
+/// END, back to Fig. 5
 
 spshape2dta "datasets\shapefiles\Eth_Adm1.shp", replace 
 

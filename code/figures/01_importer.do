@@ -24,7 +24,6 @@ keep if inlist(mktday,0,1)
 
 rename location mktid
 
-
 gen month=month(date)
 gen year=year(date)
 

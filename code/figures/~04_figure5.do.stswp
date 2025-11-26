@@ -311,7 +311,7 @@ graph combine comb2 comb1, name(comb3, replace) graphregion(margin(0 0 0 0))
 graph combine comb3 lowerRow, row(2) graphregion(margin(0 0 0 0))  name(figure5, replace)
 graph display, ysize(12) xsize(16)
 
-graph export "graphs/figure5.png", replace height(2000)
+graph export "graphs/Fig_4.png", replace height(2000)
 
 
 

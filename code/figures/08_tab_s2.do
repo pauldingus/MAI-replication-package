@@ -50,7 +50,7 @@ areg activity_harmonized_2019 lean_season_vs_normal ///
        inrange(activity_harmonized_2019, -50, 300), ///
     absorb(mktid) vce(cluster month) 
 
-outreg2 using lean_season_results, replace ///
+outreg2 using temp/lean_season_results, replace ///
     ctitle("All") bdec(3) tdec(3) label word
 
 *-----------------------------------------------
@@ -63,7 +63,7 @@ foreach adm in Tigray Amhara Oromia {
            admlvl1=="`adm'", ///
         absorb(mktid) vce(cluster month)
 
-    outreg2 using lean_season_results, append ///
+    outreg2 using temp/lean_season_results, append ///
         ctitle("`adm'") bdec(3) tdec(3) label word
 
 }

@@ -56,3 +56,6 @@ run code/figures/06_figure_S7.do
 
 // 07 Figure LSMS
 run code/figures/07_figure_lsms.do
+
+// 08 Table S2
+run code/figures/08_tab_s2.do

@@ -1,4 +1,3 @@
-
 global endOfData = td(31dec2024)
 local d1 = td(01nov2020)
 local d2 = td(01may2021)

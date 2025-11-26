@@ -1,4 +1,3 @@
-
 use "temp/activityAndWeather_eth.dta", replace
 
 egen mktCode= group(mktid)

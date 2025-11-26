@@ -79,7 +79,7 @@ preserve
 	ylabel(100(10)120, angle(0)) yscale(range(100(10)120)) ///
 	   text(116.5 1.8 "`beta'***" , placement(c) color("$color3")) ///
 	   text(115 1.8  "(`se')", placement(c) color("$color3")) ///
-	   xtitle("Rainfall shocks during previous growing season") ytitle("Market acitvity during harvest season") ///
+	   xtitle("Rainfall shocks during previous growing season") ytitle("Market activity during harvest season") ///
 		graphregion(margin(-2 0 0 0)) plotregion(lstyle(none))
 	graph display, ysize(10) xsize(10) 
  restore

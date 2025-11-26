@@ -1,10 +1,13 @@
 // FIGURE 5
+// Load ADM-2 boundaries with some minor adjacent zones merged
 spshape2dta "datasets\shapefiles\redrawnZonesDissolved_20211129.shp", replace
+
 use redrawnZonesDissolved_20211129_shp, clear
-	gen _EMBEDDED=0
-	replace _EMBEDDED=1 if _ID==24 
+    gen _EMBEDDED = 0
+    replace _EMBEDDED = 1 if _ID == 24
 save redrawnZonesDissolved_20211129_shp, replace
 
+// Prepare conflict data
 import delimited "datasets\conflict\2012-07-01-2025-07-01-Ethiopia.csv", clear 
 
 drop if event_type == "Strategic developments"
@@ -16,8 +19,9 @@ drop event_date
 rename event_date_pre event_date
 
 keep if inrange(event_date, td(01jan2018), td(31dec2024))
-capture noisily gen month=month(event_date)
-capture noisily gen year = year(event_date)
+
+gen month=month(event_date)
+
 gen countEvent = 1
 preserve
 	collapse (sum) countEvent, by(month year admin1)
@@ -36,7 +40,9 @@ preserve
 	rename admin1 admlvl1
 	save "temp/conflict_adm1_quarter.dta", replace
 restore
- 
+
+
+// Lower panel of Fig. 5A 
 use "temp/conflict_adm1.dta", clear
 local date1 =td(15jan2018)
 local date2 =td(15jan2019)
@@ -54,15 +60,17 @@ tw (bar countEventTigray date, barw(25) col("$color1") lw(0)) ///
    , graphregion(color(white) margin(0 0 0 0)) xlabel(`date1' "Jan 2018" `date2' "Jan '19" `date3' "Jan '20" `date4' "Jan '21" `date5' "Jan '22" `date6' "Jan '23" `date7' "Jan '24" `date8' "Jan 2025", angle(45) labsize(huge)) xtick(`date1' `date2' `date3' `date4' `date5' `date6') name(bars, replace) ytitle("# monthly" "conflict events" , size(huge)) legend(off) xtitle("")  ylabel(0(200)200, labsize(huge))   plotregion(lstyle(none))
 
 use "temp/activityAndWeather_eth.dta", replace
-keep if mktday==1 
+keep if mktday==1
 keep if inrange(date, td(01jan2018), td(31dec2024))
 replace admlvl1 = "Other" if !inlist(admlvl1, "Tigray", "Oromia", "Amhara")
 
 encode admlvl2, gen(admlvl2_code)
 
+// generate deseasonalized measure
 reg activity_harmonized_2019 i.month#i.admlvl2_code if inrange(date, td(01jan2018), td(28feb2020)) & inrange(activity_harmonized_2019, -50, 300)
-predict seasonal_mktAct_2018 if activity_harmonized_2019!=. & inrange(activity_harmonized_2019, -50, 300), xb
-gen deseas_mktAct_2018 = activity_harmonized_2019-seasonal_mktAct_2018
+predict seasonal_mktAct_2018 if activity_harmonized_2019 != . & inrange(activity_harmonized_2019, -50, 300), xb
+gen deseas_mktAct_2018 = activity_harmonized_2019 - seasonal_mktAct_2018
+
 
 capture drop _ID
  geoinpoly  marketlat marketlon  using redrawnZonesDissolved_20211129_shp
@@ -98,6 +106,8 @@ preserve
 	collapse (mean) deseas_mktAct_2018, by(year quarter admlvl1)
 	save "temp/act_by_quarter_adm1.dta", replace
 restore 
+
+
 
 gen mkts_per_adm = .
 levelsof _ID_adm2, local(adms)
@@ -232,7 +242,8 @@ graphregion(margin(0 2 0 0)) xlabel(,labsize(medlarge)) ylabel(,labsize(medlarge
    text(-26 350  "(`se')", placement(c) color(gs6)) ///
    text( 40 400 "`b_Tigray'`starsTigray' (`se_Tigray')", placement(w) color($colorTigray)) ///
    text( 34 400 "`b_Amhara'`starsAmhara' (`se_Amhara')", placement(w) color($colorAmhara)) ///
-   text( 28 400 "`b_Oromia'`starsOromia' (`se_Oromia')", placement(w) color($colorOromia))
+   text( 28 400 "`b_Oromia'`starsOromia' (`se_Oromia')", placement(w) color($colorOromia)) ///
+   yline($leanSeasonAll, lp(dash) lc(gs6))
 
 graph display, xsize(6) ysize(6)
 
@@ -328,3 +339,7 @@ graph combine comb3 lowerRow, row(2) graphregion(margin(0 0 0 0))  name(figure5,
 graph display, ysize(12) xsize(16)
 
 graph export "graphs/figure5.png", replace height(2000)
+
+
+
+

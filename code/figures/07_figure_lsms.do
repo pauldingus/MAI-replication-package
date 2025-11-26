@@ -110,5 +110,5 @@ distplot log_km if km_to_nid<300, over(detected_market_in_community) ///
 	text(.7 `=log(1.8)' "Stated: market within" "5km from community", size(small) color("$color3") placement(e)) ///
 	text(.3 `=log(100)' "Stated: no market within" "5km from community", size(small) color("$color2") placement(w))
 graph display, xsize(16) ysize(16)
-graph export "graphs/figure_lsms.png", replace height(2000)
+graph export "graphs/Fig_S_lsms.png", replace height(2000)
 

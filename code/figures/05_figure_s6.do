@@ -237,4 +237,4 @@ tw (line log_delta log_samplesize if power=="0.5" & alpha == "`a_goal'" & interv
 	text(2.2 3.5 "Month-on-" "month (`obs_month')", color("$color1") placement(s)) ///
 	text(1 3 "Quarter-on-" "quarter (`obs_quarter')", color("$color2") placement(c) bcolor(white) fcolor(white) box bmargin(medsmall)) ///
 	text(0.2 1 "Year-on-year" "(Mean # readings per" "market & period: `obs_year')", color("$color3") placement(s)) 
-   graph export "graphs/figures6.png", replace height(2000)
+   graph export "graphs/Fig_s_power.png", replace height(2000)

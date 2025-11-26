@@ -1,23 +1,7 @@
-global color1 "42 157 143"
-global color2 "233 196 106"
-global color3 "231 111 81"
-global color4 "150 177 137"
-global color5 "234 155 94"
-
 use "temp/activityAndWeather_eth.dta", replace
 
 keep if inlist(year,2018,2019)
-/*
-preserve
-	duplicates drop mktid, force
-	sample 200, count
-	keep mktid
-	tempfile tmp
-	save `tmp'
-restore
 
-merge m:1 mktid using `tmp', keep(3) nogen
-*/
 tw  (hist activity_harmonized_2018 if mktday==1, frac color("$color1") barw(3.5) bin(100) lw(0)) ///
 	, ytitle("") xtitle("") title("Market days", ring(0) pos(1) color("$color1")  size(small)) ///
 	 name(up, replace) xlabel(0(100)300,nolabel) xscale(range(-50(50)300)) ylabel(, labsize(small))  graphregion(margin(0 +0 0 +0))
@@ -61,10 +45,5 @@ text(.85 40 " MAI{sub:md}", color("$color1") placement(e)) ///
 text(.85 65 "{sup:d}=",  placement(e)) ///
 text(.85 76 "MAI{sub:nmd}", color("$color1%50") placement(e)) 
 
-
-/*
-tw (hist coll2, color("$color1") barw(0.01) bin(100)), ///
-xline(0.05, lp(dash) lc(gs6)) title("{bf:B}", pos(10)) name(b, replace) xtitle("p-values MAI{sup:non-market day} {sup:d}= MAI{sup:market day}") ytitle("Density") 
-*/
 graph combine a b, row(1) iscale(1)
-graph export "graphs/figure_s7.png", replace height(2000)
+graph export "graphs/Fig_S_distribDifferences.png", replace height(2000)

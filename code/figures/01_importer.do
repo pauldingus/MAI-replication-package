@@ -3,12 +3,12 @@ local d1 = td(01nov2020)
 local d2 = td(01may2021)
 global refRange2 `d1',`d2'
 
-import delimited "datasets/activity_raw/df_ETH_20250623_batch0.csv", clear
+import delimited "datasets/activity_raw/df_ETH_20251216_batch0.csv", clear
 tempfile tmp
 save `tmp'
 
-forv b=1/16{
-	import delimited "datasets/activity_raw/df_ETH_20250623_batch`b'.csv", clear
+forv b=1/17{
+	import delimited "datasets/activity_raw/df_ETH_20251216_batch`b'.csv", clear
 	append using `tmp'
 	tempfile tmp
 	save `tmp'

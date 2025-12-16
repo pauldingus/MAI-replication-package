@@ -19,7 +19,7 @@ preserve // keep 30 adm2s
 set seed 2714
 	duplicates drop admlvl2, force
 	gsort -markets_per_adm2
-	keep if _n<=15 | admlvl2=="Central"
+	keep if _n<=16 | admlvl2=="Central"
 	keep admlvl2
 	tempfile tmp
 	save `tmp'

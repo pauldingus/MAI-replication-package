@@ -1,12 +1,12 @@
 		(1)	(2)	(3)	(4)
 VARIABLES	LABELS	All	Tigray	Amhara	Oromia
 					
-lean_season_vs_normal	Lean season reduction	-17.684***	-19.747***	-16.607***	-16.881***
-		(1.624)	(3.623)	(3.086)	(1.770)
-Constant	Constant	93.708***	95.692***	95.465***	91.594***
-		(1.156)	(1.915)	(1.638)	(2.216)
+lean_season_vs_normal	Lean season reduction	-17.772***	-20.767***	-16.301***	-17.911***
+		(1.650)	(2.550)	(2.606)	(2.198)
+Constant	Constant	94.326***	95.718***	95.829***	93.132***
+		(1.219)	(1.652)	(1.230)	(2.356)
 					
-Observations		43,575	4,974	17,372	16,000
-R-squared		0.162	0.120	0.132	0.194
+Observations		48,010	5,506	19,002	17,638
+R-squared		0.152	0.112	0.122	0.182
 Robust standard errors in parentheses					
 *** p<0.01, ** p<0.05, * p<0.1					

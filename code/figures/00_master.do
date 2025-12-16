@@ -48,14 +48,14 @@ graph export "graphs/Fig_4.png", replace height(2000)
 // 04 Figure 5
 run code/figures/04_figure5.do
 
-// 05 Figure S6
-run code/figures/05_figure_S6.do
+// 05 Figure LSMS
+run code/figures/05_figure_s7.do
 
-// 06 Figure S7
-run code/figures/06_figure_S7.do
+// 06 Figure S9
+run code/figures/06_figure_s9.do
 
-// 07 Figure LSMS
-run code/figures/07_figure_lsms.do
+// 07 Figure S10
+run code/figures/07_figure_s10.do
 
 // 08 Table S2
 run code/figures/08_tab_s2.do

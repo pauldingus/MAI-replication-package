@@ -175,3 +175,18 @@ gen instrument_gen = ""
 
 capture drop _merge
 save "temp/activity_appended_eth.dta", replace	
+
+// Typical time of acquisition
+
+gen hour = substr(image_id, strpos(image_id,"_")+1,2)
+gen minute = substr(image_id, strpos(image_id,"_")+3,2)
+gen second = substr(image_id, strpos(image_id,"_")+5,2)
+
+destring hour minute second, replace
+
+gen time_dec_utc = hour + minute/60 + second/3600
+
+gen time_dec_local = time_dec_utc + 3
+
+su time_dec_local, d
+hist time_dec_local

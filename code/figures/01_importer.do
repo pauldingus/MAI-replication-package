@@ -139,7 +139,7 @@ forv tgtyear = 2018/2023 {
 			by(`cluster_var' mktday)
 
 		foreach var in mean_tgt sd_tgt mean_own sd_own {
-			egen `var' = max(`var'_pre), by(cluster mktday)
+			egen `var' = max(`var'_pre), by(`cluster_var' mktday)
 		}
 
 		// Harmonize the activity data using the z-score formula:

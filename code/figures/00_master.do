@@ -28,34 +28,35 @@ run code/figures/01_importer.do
 * output: temp/activityAndWeather_eth.dta
 run code/figures/02_mergeWeatherData.do
 
-// 03 Figure 4 
+// 02a Figure LSMS
+run code/figures/02a_fig4d_inputs.do
+
+// 03 Figure 5
 * panel A - name: panela
-run code/figures/03_figure4a.do
+run code/figures/03_figure5a.do
 
 * panel B - name: seasonality
-run code/figures/03_figure4b.do
+run code/figures/03_figure5b.do
 
 * panel C - name: seasons_per_adm
-run code/figures/03_figure4c.do
+run code/figures/03_figure5c.do
 
 * panel D - name: shocks
-run code/figures/03_figure4d.do
+run code/figures/03_figure5d.do
 
-graph combine panela seasonality seasons_per_adm shocks,  altshrink graphregion(margin(none)) imargin(medsmall) name(figure4, replace)
-graph display, xsize(16) ysize(16)
-graph export "graphs/Fig_4.png", replace height(2000)
+graph combine panela seasonality seasons_per_adm shocks,  altshrink iscale (*1.5) graphregion(margin(none)) imargin(medsmall) name(figure4, replace)
+graph display, xsize(7.0866142) ysize(7.0866142)
+graph export "graphs/Fig_5.png", replace height(2000)
+graph export "graphs/Fig_5.pdf", replace height(7.0866142)
 
 // 04 Figure 5
-run code/figures/04_figure5.do
+run code/figures/04_figure6.do
 
-// 05 Figure LSMS
-run code/figures/05_figure_s7.do
+// 05 Figure S6
+run code/figures/06_figure_s6.do
 
-// 06 Figure S9
-run code/figures/06_figure_s9.do
+// 06 Figure S7
+run code/figures/07_figure_s7.do
 
-// 07 Figure S10
-run code/figures/07_figure_s10.do
-
-// 08 Table S2
+// 07 Table S2
 run code/figures/08_tab_s2.do

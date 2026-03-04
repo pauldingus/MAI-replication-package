@@ -90,7 +90,11 @@ hist log_km if cs4q14 == 1 | cs4q15<5, bin(100) fraction ///
 gen detected_market_in_community = .
 	replace detected_market_in_community = 1 if cs4q14==1 | cs4q15<=5
 	replace detected_market_in_community = 0 if cs4q14==2 & cs4q15>5
-	
+
+export delimited using "temp\data_for_lsms_comparison.csv", replace
+// continued in jupyter notebook
+
+/*	
 ksmirnov km_to_nid, by(detected_market_in_community)
 if r(p)<0.001{
 	local pvalue "<0.001"
@@ -112,3 +116,4 @@ distplot log_km if km_to_nid<300, over(detected_market_in_community) ///
 graph display, xsize(16) ysize(16)
 graph export "graphs/Fig_S_lsms.png", replace height(2000)
 
+*/
